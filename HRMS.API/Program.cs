@@ -1,10 +1,14 @@
-﻿using HRMS.Domain.Entities;
+﻿using HRMS.Application.Interfaces;
+using HRMS.Application.Services;
+using HRMS.Domain.Entities;
 using HRMS.Infrastructure.DbContext;
+using HRMS.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +33,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 var jwt = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwt["Key"]!);
 
+builder.Services.AddScoped<EmployeeRepository>();
+builder.Services.AddScoped<HRRepository>();
+builder.Services.AddScoped<AuthRepository>();
+builder.Services.AddScoped<OrganizationRepository>();
+builder.Services.AddScoped<OrganizationService>();
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -44,16 +54,22 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwt["Issuer"],
         ValidAudience = jwt["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(key)
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        RoleClaimType = ClaimTypes.Role
     };
 });
 
+
+
 builder.Services.AddAuthorization();
+
+// ✅ SERVICE REGISTRATION ADD KARVA MA AAVYU
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// -------------------- Swagger + JWT Authorize Button --------------------
+// -------------------- Swagger + JWT --------------------
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "HRMS API", Version = "v1" });
@@ -85,7 +101,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// -------------------- ROLE SEED (Admin + HR) --------------------
+// -------------------- ROLE SEED --------------------
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();

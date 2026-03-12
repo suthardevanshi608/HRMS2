@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HRMS.Domain\HRMS.Domain.csproj" />
+    <ProjectReference Include="..\HRMS.Infrastructure\HRMS.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

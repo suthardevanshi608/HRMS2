@@ -12,16 +12,24 @@ namespace HRMS.Infrastructure.DbContext
         }
 
         public DbSet<Organization> Organizations { get; set; }
+        public DbSet<Employee> Employees { get; set; }   // ⭐ IMPORTANT
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(builder);
+            base.OnModelCreating(modelBuilder);
 
-            builder.Entity<Organization>()
-                .HasOne(o => o.CreatedByUser)
-                .WithMany()
-                .HasForeignKey(o => o.CreatedByUserId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // Prevent EF from treating Id as identity column
+            modelBuilder.Entity<Organization>()
+                .Property(o => o.Id)
+                .ValueGeneratedNever();
+
+            // Set default value for CreatedAt
+            modelBuilder.Entity<Organization>()
+                .Property(o => o.CreatedAt)
+                .HasDefaultValueSql("NOW()");
         }
+
     }
+
 }
+

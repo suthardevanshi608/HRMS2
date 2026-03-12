@@ -1,5 +1,6 @@
 ﻿using HRMS.Application.DTOs.Auth;
 using HRMS.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -22,8 +23,10 @@ namespace HRMS.API.Controllers
             _config = config;
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterRequest request)
+        // ✅ FIRST ADMIN REGISTER
+        [AllowAnonymous]
+        [HttpPost("register-admin")]
+        public async Task<IActionResult> RegisterAdmin(RegisterRequest request)
         {
             var user = new ApplicationUser
             {
@@ -34,29 +37,31 @@ namespace HRMS.API.Controllers
             var result = await _userManager.CreateAsync(user, request.Password);
             if (!result.Succeeded) return BadRequest(result.Errors);
 
-            return Ok("User registered");
+            await _userManager.AddToRoleAsync(user, "OrganizationAdmin");
+
+            return Ok("Admin registered successfully");
         }
 
+        // ✅ LOGIN
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
-                return Unauthorized();
+                return Unauthorized("Invalid credentials");
 
-            // ✅ Minimal required change: fetch user roles
             var userRoles = await _userManager.GetRolesAsync(user);
 
-            var authClaims = new List<Claim>
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.Email!)
             };
 
-            // ✅ Add role claims
             foreach (var role in userRoles)
             {
-                authClaims.Add(new Claim(ClaimTypes.Role, role));
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
             var jwt = _config.GetSection("Jwt");
@@ -65,7 +70,7 @@ namespace HRMS.API.Controllers
             var token = new JwtSecurityToken(
                 issuer: jwt["Issuer"],
                 audience: jwt["Audience"],
-                claims: authClaims,
+                claims: claims,
                 expires: DateTime.UtcNow.AddHours(2),
                 signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
             );

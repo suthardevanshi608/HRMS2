@@ -1,14 +1,19 @@
-﻿using HRMS.Domain.Entities;
+﻿using System;
+using HRMS.Domain.Entities;
 
 namespace HRMS.Domain.Entities
 {
     public class Organization
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Address { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        public string CreatedByUserId { get; set; }
-        public ApplicationUser CreatedByUser { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+
+        // Add these two properly
+        public string CreatedBy { get; set; } = string.Empty; // ensure default value
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        
     }
 }

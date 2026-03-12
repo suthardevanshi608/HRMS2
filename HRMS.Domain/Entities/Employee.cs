@@ -24,9 +24,10 @@ namespace HRMS.Domain.Entities
 
         // HR who created this employee
         [Required]
-        public string CreatedById { get; set; }
+        public string CreatedById { get; set; } = string.Empty;
 
         [ForeignKey("CreatedById")]
-        public virtual ApplicationUser CreatedBy { get; set; }
+        public ApplicationUser? CreatedBy { get; set; }
     }
+
 }

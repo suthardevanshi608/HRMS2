@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace HRMS.API.Controllers
 {
@@ -34,12 +36,14 @@ namespace HRMS.API.Controllers
 
             var organization = new Organization
             {
+                
                 Name = request.Name,
                 Address = request.Address,
-                CreatedByUserId = user.Id
+                CreatedBy = user.Id,
+                CreatedAt = System.DateTime.UtcNow
             };
 
-            _context.Organizations.Add(organization);
+            await _context.Organizations.AddAsync(organization);
             await _context.SaveChangesAsync();
 
             // Assign Admin role if not assigned
@@ -63,10 +67,9 @@ namespace HRMS.API.Controllers
             return Ok(organizations);
         }
 
-
         // UPDATE Organization
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] OrganizationRequest request)
+        public async Task<IActionResult> Update(string id, [FromBody] OrganizationRequest request)
         {
             var organization = _context.Organizations.FirstOrDefault(x => x.Id == id);
             if (organization == null)
@@ -82,7 +85,7 @@ namespace HRMS.API.Controllers
 
         // DELETE Organization
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(string id)
         {
             var organization = _context.Organizations.FirstOrDefault(x => x.Id == id);
             if (organization == null)
